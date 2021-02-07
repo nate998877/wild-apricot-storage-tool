@@ -40,25 +40,41 @@ class Apricot():
             "LastName": "last",
             "Id": "id",
         }
-        user_list = []
+        user_dict = {}
         for user in data["Contacts"]:
             filter_user = {}
-
             for key in filter_keys.keys():
                 filter_user[filter_keys[key]] = user[key]
+
 
             group_field = list(filter(
                 lambda x: x['SystemCode'] == 'custom-10343687', user['FieldValues']))
 
             try:
                 filter_user['storage_location'] = group_field[0]["Value"]
-                user_list.append(filter_user)
+                user_dict[filter_user["id"]] = {
+                    'user':user,
+                    'data':filter_user
+                }
             except:
                 pass
 
+        return user_dict
 
-        return user_list
 
+    def upload_users_storage(self, users):
+        for user in users:
+            contact_id = user["data"]["id"]
+            user["user"]["FieldValues"] = {
+                "FieldName": "Member Storage Location Assigned",
+                "Value": user["data"]["storage_location"],
+                "SystemCode": "custom-10343687"
+            }
+
+            r = requests.put(
+                f'https://api.wildapricot.org/v2.2/accounts/{self.account_id}/contacts/{contact_id}', headers=self.headers, json=user)
+
+        pass
 
     def print_to_file(self, data, filename='output.json'):
         with open(filename, 'w') as outfile:
