@@ -21,7 +21,7 @@ class Apricot():
         self.account_id = account['Permissions'][0]['AccountId']
         token = account['access_token']
         self.headers = {'User-Agent': 'doorCommand/0.1',
-            'Accept': 'application/json',
+            'Accept': 'application/json`',
             'Authorization': f'Bearer {token}'}
 
     def get_user_list(self):

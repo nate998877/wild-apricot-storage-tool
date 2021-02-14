@@ -8,14 +8,25 @@ dev = True
 
 # BE WARNED! I'm lazy
 
-def get_current_storage(filename='storage.json'):
+def get_current_storage(filename='new_data.json'):
     with open(filename, 'r') as infile:
         return json.load(infile)
 
-def save_storage(data, filename='storage.json'):
+def save_storage(data, filename='new_data.json'):
     with open(filename, 'w') as outfile:
         json.dump(data, outfile)
 
+def save_parsed_storage(data, filename='new_data.json'):
+    with open(filename, 'w') as outfile:
+        json.dump(data, outfile)
+
+def get_parsed_storage(data, filename='output.json'):
+    with open(filename, 'r') as infile:
+        json.dump(data, infile)
+
+def get_full_member_data(filename='storage.json')
+    with open(filename, 'r') as infile:
+        return json.load(infile)
 
 def calc_used_storage(data):
     unit_state = {
