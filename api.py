@@ -27,32 +27,31 @@ class Apricot():
     def get_user_list(self):
         params = {
             '$async': False,
-            '$filter': "'Membership level ID' ne 725412 AND 'Membership status' ne 'Lapsed'"
+            '$filter': "'Membership level ID' ne 725412 AND 'Membership level ID' ne 983437 AND 'Membership level ID' ne 725876 AND 'Membership status' eq 'Active'"
         }
         r = requests.get(
             f'https://api.wildapricot.org/v2.2/accounts/{self.account_id}/contacts/', headers=self.headers, params=params)
         return r.json()
 
     def filter_user_data(self, data):
-        filter_keys = {
-            "FirstName": "first",
-            "Status": "status",
-            "LastName": "last",
-            "Id": "id",
-        }
+        filter_keys = ["FirstName", "Status", "LastName", "Id"]
         user_dict = {}
+
         for user in data["Contacts"]:
             filter_user = {}
-            for key in filter_keys.keys():
-                filter_user[filter_keys[key]] = user[key]
+            for key in filter_keys:
+                filter_user[key] = user[key]
 
-
-            group_field = list(filter(
-                lambda x: x['SystemCode'] == 'custom-10343687', user['FieldValues']))
+            storage_field = filter(lambda x: x['SystemCode'] == 'custom-10343687', user['FieldValues'])
 
             try:
-                filter_user['storage_location'] = group_field[0]["Value"]
-                user_dict[filter_user["id"]] = {
+                storage_field = next(storage_field)
+            except:
+                continue
+
+            try:
+                filter_user['storage_location'] = storage_field["Value"]
+                user_dict[filter_user["Id"]] = {
                     'user':user,
                     'data':filter_user
                 }
@@ -60,7 +59,6 @@ class Apricot():
                 pass
 
         return user_dict
-
 
     def upload_users_storage(self, users):
         for user in users:
