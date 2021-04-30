@@ -34,13 +34,20 @@ class Apricot():
         return r.json()
 
     def filter_user_data(self, data):
-        filter_keys = ["FirstName", "Status", "LastName", "Id"]
+        filter_keys = ["FirstName", "Status", "LastName", "Id", "MembershipLevel"]
         user_dict = {}
 
         for user in data["Contacts"]:
             filter_user = {}
+            print(user['MembershipEnabled'])
+            if not user['MembershipEnabled']:
+                print(user)
+                continue
             for key in filter_keys:
-                filter_user[key] = user[key]
+                if key == "MembershipLevel":
+                    filter_user[key] = user[key]["Name"]
+                else:
+                    filter_user[key] = user[key]
 
             storage_field = filter(lambda x: x['SystemCode'] == 'custom-10343687', user['FieldValues'])
 

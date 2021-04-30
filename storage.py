@@ -1,32 +1,22 @@
+from os import write
 from dotenv import load_dotenv, main
 import json
 load_dotenv()
 from api import Apricot
 
 # Don't pull live data while developing
-dev = False
+dev = True
 
 # BE WARNED! I'm lazy
 
-def get_current_storage(filename='new_data.json'):
+def read_file(filename='data.json'):
     with open(filename, 'r') as infile:
         return json.load(infile)
 
-def save_storage(data, filename='new_data.json'):
-    with open(filename, 'w') as outfile:
-        json.dump(data, outfile)
-
-def save_parsed_storage(data, filename='new_data.json'):
-    with open(filename, 'w') as outfile:
-        json.dump(data, outfile)
-
-def get_parsed_storage(data, filename='output.json'):
-    with open(filename, 'r') as infile:
+def write_file(data, filename='data.json'):
+    with open(filename, 'w') as infile:
         json.dump(data, infile)
 
-def get_full_member_data(filename='storage.json'):
-    with open(filename, 'r') as infile:
-        return json.load(infile)
 
 def calc_used_storage(data):
     unit_state = {
@@ -35,18 +25,19 @@ def calc_used_storage(data):
     }
 
     for member in data:
-        unit = data[member]["data"]["storage_location"]
+        member_data = data[member]["data"]
+        unit = member_data["storage_location"]
 
         if unit:
             try:
                 # relying on non-stupidity for manually assigned units...
 
                 # try to split by '-' to see if valid format => x-x-x this is a naive approach. --- would be valid even if it's wrong.
-                [row, col, box] = unit.split('-')
-                unit = unit.split('-') # have to split first to validate
-                unit_state['taken'][data[member]['data']['Id']] = {
-                    'unit': '-'.join(unit),
-                    'id': data[member]['data']['Id']
+                [row, col, box] = unit.split('-') #test format
+
+                unit_state['taken'][member_data['Id']] = {
+                    'unit': '-'.join([row, col, box]),
+                    'id': member_data['Id']
                 }
 
             except:
@@ -67,13 +58,14 @@ def calc_storage(data):
         for col in col_range:
             for box in box_range:
                 units.append(f"{row}-{col}-{box}")
-    print(units)
-    for _, unit in unit_state["taken"].items():
+    print("all possible units: ", units)
+    for _id, unit in unit_state["taken"].items():
         unit = unit["unit"]
         try:
             units.remove(unit)
         except:
-            unit_state["invalid"].append(_)
+            #Unit out of range
+            unit_state["invalid"].append(_id)
 
     return (units, unit_state)
 
@@ -83,8 +75,9 @@ def assign_storage(data, open_units, unit_state):
         print(invalid)
     index = 0
     for member in data:
-        if not data[member]['data']["storage_location"] or data[member]['data']["Id"] in unit_state["invalid"]:
-            data[member]['data']["storage_location"] = open_units[index]
+        member_data = data[member]['data']
+        if not member_data["storage_location"] or member_data["Id"] in unit_state["invalid"]:
+            member_data["storage_location"] = open_units[index]
             index += 1
 
     return data
@@ -100,12 +93,16 @@ def main():
         apricot = Apricot()
         data = apricot.get_user_list()
         data = apricot.filter_user_data(data)
-        save_storage(data)
+        write_file(data)
+        only_data = []
+        for key in data:
+            only_data.append(data[key]["data"])
+        write_file(only_data, "data_only.json")
 
-    data = get_current_storage("new_data.json")
+    data = read_file()
     [units, unit_state] = calc_storage(data)
     new_data = assign_storage(data, units, unit_state)
-    save_storage([new_data, unit_state], 'output.json')
+    write_file([new_data, unit_state])
     print_simplified(new_data)
     # if not dev:
     #     apricot = Apricot()
